@@ -1,4 +1,4 @@
-# app-label-timecourse-v2
+# label-timecourse
 
 Brainlife.io app to extract label time courses from a MEG/EEG source estimate (STC).
 
