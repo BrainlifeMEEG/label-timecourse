@@ -1,0 +1,9 @@
+{
+    "stc": "in_dir/stc",
+    "stc-lh": null,
+    "freesurfer": "in_dir/freesurfer",
+    "subject": null,
+    "atlas": "aparc",
+    "labels": "",
+    "hemi": "both"
+}

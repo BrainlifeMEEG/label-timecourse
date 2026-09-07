@@ -38,6 +38,7 @@ from brainlife_utils import (
     add_info_to_product,
     add_image_to_product,
     create_product_json,
+    setup_offscreen_3d_backend,
 )
 
 setup_matplotlib_backend()
@@ -271,48 +272,7 @@ for hemi in hemis:
 
 # == BRAIN LABEL / ANNOTATION PLOTS ==
 try:
-    from qtpy.QtWidgets import QApplication
-    _qapp = QApplication.instance() or QApplication(sys.argv)
-
-    import pyvista as pv
-    pv.OFF_SCREEN = True
-    mne.viz.set_3d_backend('pyvistaqt')
-
-    from mne.viz.backends._pyvista import (
-        PyVistaFigure, Plotter as PVPlotter, _PyVistaRenderer, _ALL_PLOTTERS,
-    )
-    import mne.viz.backends.renderer as renderer_mod
-
-    def _patched_build(self):
-        if self._plotter is None:
-            store_filtered = {k: v for k, v in self.store.items()
-                              if k in ('window_size', 'shape', 'border', 'multi_samples')}
-            plotter = PVPlotter(off_screen=True, **store_filtered)
-            plotter.background_color = self.background_color
-            self._plotter = plotter
-            try:
-                _ALL_PLOTTERS[plotter._id_name] = plotter
-            except AttributeError:
-                pass
-        if self.plotter.iren is not None:
-            self.plotter.iren.initialize()
-            def safe_update(stime=1, force_redraw=True):
-                self.plotter.render()
-            self.plotter.update = safe_update
-        return self.plotter
-
-    PyVistaFigure._build = _patched_build
-
-    class _OffscreenRenderer(_PyVistaRenderer):
-        _kind = 'pyvistaqt'
-        def show(self):
-            self.figure.plotter.show(auto_close=False)
-        def __getattr__(self, name):
-            if name.startswith(('_window_', '_dock_', '_enable_', '_disable_')):
-                return lambda *a, **kw: None
-            raise AttributeError(name)
-
-    renderer_mod.backend._Renderer = _OffscreenRenderer
+    setup_offscreen_3d_backend()
 
     Brain = mne.viz.get_brain_class()
 
