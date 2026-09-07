@@ -1,5 +1,8 @@
 # label-timecourse
 
+[![Abcdspec-compliant](https://img.shields.io/badge/ABCD_Spec-v1.1-green.svg)](https://github.com/brain-life/abcd-spec)
+[![Run on Brainlife.io](https://img.shields.io/badge/Brainlife-bl.app.932-blue.svg)](https://doi.org/10.25663/brainlife.app.932)
+
 Brainlife.io app to extract label time courses from a MEG/EEG source estimate (STC).
 
 Given a source estimate and a FreeSurfer parcellation atlas, this app extracts the mean source amplitude time course for each requested label and saves the result as a timeseries datatype and a surface GIFTI file.
