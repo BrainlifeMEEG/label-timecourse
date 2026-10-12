@@ -45,9 +45,11 @@ setup_matplotlib_backend()
 import matplotlib.pyplot as plt
 import mne
 
+mne.set_log_level('WARNING')
+
 # == SETUP ==
 ensure_output_dirs('out_dir', 'out_surface', 'out_figs', 'out_report')
-report_items = []
+product_items = []
 
 # == LOAD CONFIG ==
 config = load_config()
@@ -77,24 +79,24 @@ elif stc_input:
         stc_base = stc_input
 
 if stc_base is None:
-    add_info_to_product(report_items,
+    add_info_to_product(product_items,
                         f"FATAL: No *-lh.stc files found. "
                         f"Checked stc-lh='{stc_lh_file}', stc='{stc_input}'.", "error")
-    create_product_json(report_items)
+    create_product_json(product_items)
     sys.exit(1)
 
 # == LOAD STC ==
 try:
     stc = mne.read_source_estimate(stc_base)
     add_info_to_product(
-        report_items,
+        product_items,
         f"Loaded STC: {stc.data.shape[0]} vertices, {stc.data.shape[1]} time points "
         f"({stc.times[0]*1000:.0f}–{stc.times[-1]*1000:.0f} ms)",
         "info"
     )
 except Exception as e:
-    add_info_to_product(report_items, f"FATAL: Could not read STC: {e}", "error")
-    create_product_json(report_items)
+    add_info_to_product(product_items, f"FATAL: Could not read STC: {e}", "error")
+    create_product_json(product_items)
     sys.exit(1)
 
 # == FREESURFER DIRECTORY ==
@@ -118,10 +120,10 @@ if subjects_dir is None:
     _fsa = mne.datasets.fetch_fsaverage(verbose=False)
     subjects_dir = os.path.dirname(str(_fsa))   # strip /fsaverage suffix → parent dir
     subject      = 'fsaverage'
-    add_info_to_product(report_items,
+    add_info_to_product(product_items,
                         "No FreeSurfer dir provided — using built-in fsaverage atlas.", "info")
 
-add_info_to_product(report_items, f"Subject: {subject}, subjects_dir: {subjects_dir}", "info")
+add_info_to_product(product_items, f"Subject: {subject}, subjects_dir: {subjects_dir}", "info")
 
 # == ATLAS & LABELS ==
 atlas      = (config.get('atlas') or 'aparc').strip()
@@ -135,11 +137,11 @@ try:
     for hemi in hemis:
         all_labels += mne.read_labels_from_annot(
             subject, parc=atlas, hemi=hemi, subjects_dir=subjects_dir, verbose=False)
-    add_info_to_product(report_items,
+    add_info_to_product(product_items,
                         f"Loaded {len(all_labels)} labels from atlas '{atlas}'.", "info")
 except Exception as e:
-    add_info_to_product(report_items, f"FATAL: Could not read atlas '{atlas}': {e}", "error")
-    create_product_json(report_items)
+    add_info_to_product(product_items, f"FATAL: Could not read atlas '{atlas}': {e}", "error")
+    create_product_json(product_items)
     sys.exit(1)
 
 # Filter to requested labels if specified
@@ -149,12 +151,12 @@ if labels_cfg.strip():
                   if l.name in requested
                   or l.name.removesuffix('-lh').removesuffix('-rh') in requested]
     if not all_labels:
-        add_info_to_product(report_items,
+        add_info_to_product(product_items,
                             f"FATAL: None of the requested labels found: {sorted(requested)}",
                             "error")
-        create_product_json(report_items)
+        create_product_json(product_items)
         sys.exit(1)
-    add_info_to_product(report_items, f"Filtered to {len(all_labels)} labels.", "info")
+    add_info_to_product(product_items, f"Filtered to {len(all_labels)} labels.", "info")
 
 # == EXTRACT TIME COURSES ==
 label_names  = []
@@ -170,15 +172,15 @@ for label in all_labels:
         label_tcs.append(tc)
         label_verts[label.name] = (label.hemi, verts)
     except Exception as e:
-        add_info_to_product(report_items, f"Skipped '{label.name}': {e}", "warning")
+        add_info_to_product(product_items, f"Skipped '{label.name}': {e}", "warning")
 
 if not label_tcs:
-    add_info_to_product(report_items, "FATAL: No time courses extracted.", "error")
-    create_product_json(report_items)
+    add_info_to_product(product_items, "FATAL: No time courses extracted.", "error")
+    create_product_json(product_items)
     sys.exit(1)
 
 label_tcs = np.array(label_tcs)   # (n_labels, n_times)
-add_info_to_product(report_items,
+add_info_to_product(product_items,
                     f"Extracted {len(label_names)} label time courses.", "info")
 
 # == SAVE TIMESERIES DATATYPE ==
@@ -199,7 +201,7 @@ with open(json_path, 'w') as f:
         'atlas':             atlas,
         'n_labels':          len(label_names),
     }, f, indent=2)
-add_info_to_product(report_items,
+add_info_to_product(product_items,
                     f"Saved timeseries: {len(label_names)} labels × {len(stc.times)} timepoints",
                     "info")
 
@@ -209,7 +211,7 @@ for _hemi, _side in [('lh', 'left'), ('rh', 'right')]:
         continue
     surf_path = os.path.join(subjects_dir, subject, 'surf', f'{_hemi}.inflated')
     if not os.path.isfile(surf_path):
-        add_info_to_product(report_items,
+        add_info_to_product(product_items,
                             f"Skipping GIfTI {_side}: surface not found at {surf_path}", "warning")
         continue
     try:
@@ -234,11 +236,11 @@ for _hemi, _side in [('lh', 'left'), ('rh', 'right')]:
 
         gii_path = os.path.join('out_surface', f'{_side}.gii')
         nib.save(gii, gii_path)
-        add_info_to_product(report_items,
+        add_info_to_product(product_items,
                             f"Saved GIfTI surface ({_side}): {n_verts} vertices × {len(stc.times)} timepoints",
                             "info")
     except Exception as e:
-        add_info_to_product(report_items, f"Could not write GIfTI ({_side}): {e}", "warning")
+        add_info_to_product(product_items, f"Could not write GIfTI ({_side}): {e}", "warning")
 
 # == PLOTS & REPORT ==
 report = mne.Report(title='Label Time Courses')
@@ -267,7 +269,7 @@ for hemi in hemis:
     fig_path = os.path.join('out_figs', f'label_tc_{hemi}.png')
     fig.savefig(fig_path, dpi=100, bbox_inches='tight')
     plt.close(fig)
-    add_image_to_product(report_items, f'Label time courses {hemi.upper()}', filepath=fig_path)
+    add_image_to_product(product_items, f'Label time courses {hemi.upper()}', filepath=fig_path)
     report.add_image(fig_path, title=f'Label time courses {hemi.upper()} ({atlas})')
 
 # == BRAIN LABEL / ANNOTATION PLOTS ==
@@ -307,7 +309,7 @@ try:
         _fig.savefig(labels_path, dpi=100, bbox_inches='tight')
         plt.close(_fig)
 
-        add_image_to_product(report_items,
+        add_image_to_product(product_items,
                              f'Labels {_hemi.upper()}',
                              filepath=labels_path)
         report.add_image(labels_path, title=f'Selected labels {_hemi.upper()}')
@@ -327,12 +329,12 @@ try:
                          title=f'Full atlas annotation {_hemi.upper()} ({atlas})')
 
 except Exception as e:
-    add_info_to_product(report_items, f"Could not render brain plots: {e}", "warning")
+    add_info_to_product(product_items, f"Could not render brain plots: {e}", "warning")
 
 report.save(os.path.join('out_report', 'report.html'), overwrite=True)
 
-add_info_to_product(report_items,
+add_info_to_product(product_items,
                     f"Done: {len(label_names)} labels, {len(stc.times)} time points.",
                     "success")
-create_product_json(report_items)
+create_product_json(product_items)
 print("Done.")
