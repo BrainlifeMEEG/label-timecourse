@@ -82,6 +82,7 @@ if stc_base is None:
     add_info_to_product(product_items,
                         f"FATAL: No *-lh.stc files found. "
                         f"Checked stc-lh='{stc_lh_file}', stc='{stc_input}'.", "error")
+    print(f"ERROR: {product_items[-1]['msg']}", file=sys.stderr)
     create_product_json(product_items)
     sys.exit(1)
 
@@ -96,6 +97,7 @@ try:
     )
 except Exception as e:
     add_info_to_product(product_items, f"FATAL: Could not read STC: {e}", "error")
+    print(f"ERROR: {product_items[-1]['msg']}", file=sys.stderr)
     create_product_json(product_items)
     sys.exit(1)
 
@@ -141,6 +143,7 @@ try:
                         f"Loaded {len(all_labels)} labels from atlas '{atlas}'.", "info")
 except Exception as e:
     add_info_to_product(product_items, f"FATAL: Could not read atlas '{atlas}': {e}", "error")
+    print(f"ERROR: {product_items[-1]['msg']}", file=sys.stderr)
     create_product_json(product_items)
     sys.exit(1)
 
@@ -154,6 +157,7 @@ if labels_cfg.strip():
         add_info_to_product(product_items,
                             f"FATAL: None of the requested labels found: {sorted(requested)}",
                             "error")
+        print(f"ERROR: {product_items[-1]['msg']}", file=sys.stderr)
         create_product_json(product_items)
         sys.exit(1)
     add_info_to_product(product_items, f"Filtered to {len(all_labels)} labels.", "info")
@@ -176,6 +180,7 @@ for label in all_labels:
 
 if not label_tcs:
     add_info_to_product(product_items, "FATAL: No time courses extracted.", "error")
+    print(f"ERROR: {product_items[-1]['msg']}", file=sys.stderr)
     create_product_json(product_items)
     sys.exit(1)
 
