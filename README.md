@@ -1,5 +1,52 @@
 # Extract Source Time Series
 
+<!-- brainlife-app:begin (generated from the App manifest; edit the manifest, not this block) -->
+
+> **Extracts mean source time courses for selected labels of a FreeSurfer atlas from an MEG/EEG source estimate with MNE-Python, and outputs a timeseries table, surface GIfTI time courses and a report.**
+
+Reads the left and right hemisphere STC files, loads the requested atlas labels with mne.read_labels_from_annot, averages the source amplitude within each label at every time point, paints the label time courses back onto the surface vertices, and renders plots into an HTML report. Use it to get ROI time series from source-localised MEG/EEG. Needs the subject's FreeSurfer directory with the atlas annotation and a FreeSurfer license.
+
+| | |
+|---|---|
+| 📥 **Inputs** | `neuro/meeg/stc` · `neuro/freesurfer` (optional) |
+| 📤 **Outputs** | `generic/timeseries` · `report/html` · `neuro/surface/data` |
+| 🐳 **Container** | `brainlifemeeg/mne-freesurfer:1.12.1-7.4.1` |
+| ⚙️ **Resources** | 1 CPUs · 8 GB memory · 0.5 h walltime |
+| 🔑 **Requires** | `FREESURFER_LICENSE`, `FS_LICENSE` |
+| 🔗 **Run it** | [doi.org/10.25663/brainlife.app.932](https://doi.org/10.25663/brainlife.app.932) |
+
+#### 📥 Inputs
+
+| Input | Datatype | Required | Description |
+|---|---|---|---|
+| `stc` | `neuro/meeg/stc` | yes | Source estimate (left and right hemisphere .stc files). |
+| `freesurfer` | `neuro/freesurfer` | no | FreeSurfer subject directory providing the atlas annotation labels. |
+
+#### 📤 Outputs
+
+| Output | Datatype | Description |
+|---|---|---|
+| `out_dir` | `generic/timeseries` | Label time courses (timeseries.tsv.gz with timeseries.json). |
+| `out_report` | `report/html` | HTML report with time course plots and brain renders of the labels. |
+| `out_surface` | `neuro/surface/data` | Vertex-wise surface time courses (left.gii, right.gii). |
+
+<details>
+<summary><b>⚙️ Parameters</b> (4)</summary>
+
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `atlas` | string | `aparc` | aparc , aparc.a2009s etc |
+| `labels` | string |  | comma separated label names to extract |
+| `hemi` | string | `both` | lh, rh, both |
+| `subject` | string | `output` | Freesurfer subject name |
+
+</details>
+
+📚 **References used by this App:**
+- Gramfort A, et al. MEG and EEG data analysis with MNE-Python. Front Neurosci 7(267):1-13 (2013). [doi:10.3389/fnins.2013.00267](https://doi.org/10.3389/fnins.2013.00267)
+
+<!-- brainlife-app:end -->
+
 [![Run on Brainlife.io](https://img.shields.io/badge/Brainlife-bl.app.932-blue.svg)](https://doi.org/10.25663/brainlife.app.932)
 
 ## Description
